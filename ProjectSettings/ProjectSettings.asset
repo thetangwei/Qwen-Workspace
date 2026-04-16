@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  m_ObjectHideFlags: 0
+  productName: GeoSphere AR
+  companyName: GeoSphereTeam
+  defaultScreenWidth: 1080
+  defaultScreenHeight: 1920
+  colorSpace: 1
+  targetDevice: 2
+  useOnDemandResources: 0
+  accelerometerFrequency: 60
+  defaultCursor: {fileID: 0}
+  defaultCursorHotspot: {x: 0, y: 0}
+  defaultScreenWidth: 1080
+  defaultScreenHeight: 1920
+  virtualRealitySplashScreen: {fileID: 0}
+  hmdTextureRegion: 0
+  vrEnabled: 0
+  showUnitySplashScreen: 1
+  defaultFullScreenMode: 1
+  startVR: 0
+  iosRequireARKit: 1
+  androidRequiredARCore: 1
