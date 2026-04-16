@@ -2,282 +2,164 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>AR互动地球仪</title>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <!-- 使用国内可快速访问的 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.0/dist/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ar-js-org@3.4.1/aframe/build/aframe-ar.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; overflow: hidden; background: #000; }
         
         #ui-container {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 15px;
-            color: white;
-            max-width: 300px;
-            backdrop-filter: blur(10px);
+            position: fixed; top: 10px; left: 10px; z-index: 1000;
+            background: rgba(0, 0, 0, 0.6); padding: 15px; border-radius: 10px;
+            color: white; max-width: 280px; backdrop-filter: blur(5px);
         }
-        
-        h1 {
-            font-size: 24px;
-            margin-bottom: 15px;
-            color: #4FC3F7;
-        }
-        
-        .info-text {
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-        
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
+        h1 { font-size: 20px; margin-bottom: 10px; color: #4FC3F7; }
+        .info-text { font-size: 12px; line-height: 1.5; margin-bottom: 10px; color: #ddd; }
+        .controls { display: flex; flex-direction: column; gap: 8px; }
         button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
+            padding: 8px 12px; border: none; border-radius: 6px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            color: white; font-size: 13px; cursor: pointer;
         }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
+        button:active { transform: scale(0.98); }
         
         #info-panel {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px 25px;
-            border-radius: 25px;
-            color: white;
-            font-size: 16px;
-            display: none;
-            backdrop-filter: blur(10px);
-            border: 2px solid #4FC3F7;
-        }
-        
-        .marker-guide {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 999;
-            pointer-events: none;
-            opacity: 0.5;
-        }
-        
-        .marker-guide img {
-            width: 200px;
-            height: 200px;
-            border: 3px dashed #4FC3F7;
-            border-radius: 10px;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: rgba(0, 0, 0, 0.8); padding: 12px 20px;
+            border-radius: 20px; color: white; font-size: 14px; display: none;
+            border: 1px solid #4FC3F7;
         }
         
         #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            flex-direction: column;
-            color: white;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000; flex-direction: column; color: white;
         }
-        
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top: 5px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2);
+            border-top: 4px solid #4FC3F7; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 15px;
         }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        #error-msg {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(255,0,0,0.8); color: white; padding: 20px;
+            border-radius: 10px; z-index: 3000; display: none; text-align: center;
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
     <div id="loading">
         <div class="spinner"></div>
-        <h2>正在加载AR地球仪...</h2>
-        <p>请允许摄像头访问权限</p>
+        <h2>正在启动摄像头...</h2>
+        <p style="font-size:12px; margin-top:10px; color:#aaa;">请确保允许摄像头权限</p>
+        <p style="font-size:12px; margin-top:5px; color:#aaa;">如长时间无反应，请检查网络或刷新页面</p>
     </div>
     
-    <!-- UI Container -->
+    <div id="error-msg"></div>
+    
     <div id="ui-container">
         <h1>🌍 AR互动地球仪</h1>
-        <p class="info-text">
-            使用摄像头识别标记卡片，在现实世界中查看3D地球仪！
-        </p>
+        <p class="info-text">对准 <b>Hiro 标记</b> 即可看到地球！<br><a href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" style="color:#4FC3F7;">点击此处打开标记图片</a></p>
         <div class="controls">
-            <button onclick="toggleRotation()">⏯️ 暂停/继续旋转</button>
-            <button onclick="changeView('terrain')">🏔️ 地形模式</button>
-            <button onclick="changeView('political')">🗺️ 政区模式</button>
-            <button onclick="changeView('night')">🌃 夜景模式</button>
-            <button onclick="showInfo()">ℹ️ 显示信息</button>
+            <button onclick="toggleRotation()">⏯️ 暂停/继续</button>
+            <button onclick="changeView('blue')">🌍 蓝色弹珠</button>
+            <button onclick="changeView('night')">🌃 夜景灯光</button>
+            <button onclick="changeView('topo')">🏔️ 地形地貌</button>
+            <button onclick="showInfo()">ℹ️ 地球知识</button>
         </div>
     </div>
     
-    <!-- Info Panel -->
-    <div id="info-panel">
-        <span id="info-text">地球直径：12,742公里 | 自转周期：24小时</span>
-    </div>
+    <div id="info-panel"><span id="info-text"></span></div>
     
-    <!-- AR Scene -->
-    <script src="https://aframe.io/components/look-at/src/index.min.js"></script>
-    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'>
-        
-        <!-- Marker for AR -->
+    <a-scene 
+        embedded 
+        vr-mode-ui="enabled: false"
+        arjs='sourceType: webcam; videoTexture: true; debugUIEnabled: false;'
+        renderer="logarithmicDepthBuffer: true; colorManagement: true;"
+    >
         <a-marker preset="hiro" id="marker">
-            <!-- Earth Globe -->
-            <a-entity id="earth" position="0 0.5 0" scale="0.5 0.5 0.5">
-                <!-- Earth Sphere -->
+            <a-entity id="earth" position="0 0 0" scale="0.4 0.4 0.4">
                 <a-sphere 
-                    id="earth-sphere"
-                    radius="1" 
-                    position="0 0 0"
-                    material="shader: flat; src: url('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg');"
-                    look-at="[camera]"
-                ></a-sphere>
-                
-                <!-- Atmosphere -->
-                <a-sphere 
-                    radius="1.02" 
-                    position="0 0 0"
-                    material="shader: flat; transparent: true; opacity: 0.3; src: url('https://unpkg.com/three-globe/example/img/earth-night.jpg');"
+                    id="earth-sphere" radius="1" 
+                    material="src: url('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg'); shader: standard;"
                 ></a-sphere>
             </a-entity>
-            
-            <!-- Information Labels -->
-            <a-text value="AR地球仪" position="0 1.5 0" scale="2 2 2" align="center" color="#4FC3F7"></a-text>
+            <a-text value="AR Earth" position="0 1.2 0" scale="1.5 1.5 1.5" align="center" color="#FFF"></a-text>
         </a-marker>
-        
-        <!-- Camera -->
         <a-entity camera></a-entity>
     </a-scene>
     
     <script>
-        // Hide loading screen when scene is ready
-        document.querySelector('a-scene').addEventListener('loaded', function() {
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-            }, 1000);
+        const loading = document.getElementById('loading');
+        const errorMsg = document.getElementById('error-msg');
+        const scene = document.querySelector('a-scene');
+        
+        // 错误处理
+        setTimeout(() => {
+            if (loading.style.display !== 'none') {
+                errorMsg.innerHTML = '<h3>⚠️ 加载超时</h3><p>可能原因：</p><p>1. 未允许摄像头权限</p><p>2. 网络无法加载资源</p><p>3. 浏览器不支持</p><p style="margin-top:10px;"><b>请刷新页面重试</b></p>';
+                errorMsg.style.display = 'block';
+            }
+        }, 10000);
+        
+        scene.addEventListener('loaded', () => {
+            console.log('AR Scene loaded successfully');
+            setTimeout(() => { loading.style.display = 'none'; }, 500);
         });
         
+        scene.addEventListener('arjs:camera-error', () => {
+            loading.style.display = 'none';
+            errorMsg.innerHTML = '<h3>📷 摄像头错误</h3><p>无法访问摄像头，请检查：</p><p>1. 是否允许了权限</p><p>2. 是否有其他程序占用</p><p>3. <b>必须使用 HTTPS 或 localhost</b></p>';
+            errorMsg.style.display = 'block';
+        });
+
         let isRotating = true;
-        let earthRotationSpeed = 0.2;
+        const earth = document.getElementById('earth');
         
-        // Animation loop for earth rotation
         function animate() {
-            if (isRotating) {
-                const earth = document.getElementById('earth');
-                if (earth) {
-                    earth.object3D.rotation.y += earthRotationSpeed * 0.01;
-                }
+            if (isRotating && earth) {
+                earth.object3D.rotation.y += 0.005;
             }
             requestAnimationFrame(animate);
         }
         animate();
         
-        // Toggle rotation
-        function toggleRotation() {
-            isRotating = !isRotating;
-        }
+        function toggleRotation() { isRotating = !isRotating; }
         
-        // Change earth view mode
         function changeView(mode) {
-            const earthSphere = document.getElementById('earth-sphere');
-            const textures = {
-                'terrain': 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
-                'political': 'https://unpkg.com/three-globe/example/img/earth-topology.png',
-                'night': 'https://unpkg.com/three-globe/example/img/earth-night.jpg'
+            const sphere = document.getElementById('earth-sphere');
+            const urls = {
+                'blue': 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg',
+                'night': 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_lights_2048.png',
+                'topo': 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_normal_2048.jpg'
             };
-            
-            if (earthSphere && textures[mode]) {
-                earthSphere.setAttribute('material', 'src', textures[mode]);
-                showPanel(`已切换到${mode === 'terrain' ? '地形' : mode === 'political' ? '政区' : '夜景'}模式`);
+            if (sphere && urls[mode]) {
+                sphere.setAttribute('material', 'src', urls[mode]);
+                showPanel('已切换模式');
             }
         }
         
-        // Show information
         function showInfo() {
-            const facts = [
-                "地球直径：12,742公里",
-                "地球年龄：约45亿年",
-                "表面积：5.1亿平方公里",
-                "海洋占比：71%",
-                "自转周期：23小时56分4秒",
-                "公转周期：365.25天"
-            ];
-            
-            const randomFact = facts[Math.floor(Math.random() * facts.length)];
-            showPanel(randomFact);
+            const facts = ["地球直径：12,742 km", "海洋占比：71%", "年龄：45亿年", "自转：24小时"];
+            showPanel(facts[Math.floor(Math.random() * facts.length)]);
         }
         
-        // Show info panel
         function showPanel(text) {
-            const panel = document.getElementById('info-panel');
-            const infoText = document.getElementById('info-text');
-            infoText.textContent = text;
-            panel.style.display = 'block';
-            
-            setTimeout(() => {
-                panel.style.display = 'none';
-            }, 3000);
+            const p = document.getElementById('info-panel');
+            document.getElementById('info-text').textContent = text;
+            p.style.display = 'block';
+            setTimeout(() => { p.style.display = 'none'; }, 2000);
         }
         
-        // Handle marker visibility
-        const marker = document.getElementById('marker');
-        marker.addEventListener('markerFound', () => {
-            console.log('Marker found!');
-            showPanel('🎉 发现标记！地球仪已加载');
+        document.getElementById('marker').addEventListener('markerFound', () => {
+            showPanel('🎉 识别成功！');
         });
-        
-        marker.addEventListener('markerLost', () => {
-            console.log('Marker lost!');
-        });
-        
-        // Print marker for users
-        console.log('请打印或显示Hiro标记图片以启动AR体验');
-        console.log('Hiro标记图片地址：https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png');
     </script>
 </body>
 </html>
